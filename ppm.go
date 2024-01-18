@@ -16,7 +16,7 @@ type PPM struct {
 	data          [][]Pixel
 	width, height int
 	magicNumber   string
-	max           int
+	max           uint8
 }
 
 type Pixel struct {
@@ -31,7 +31,7 @@ type Point struct {
 // DEBUG FUNCTIONS //
 /////////////////////
 
-func NewPPM(width, height int, magicNumber string, max int) *PPM {
+func NewPPM(width, height int, magicNumber string, max uint8) *PPM {
 	ppm := &PPM{
 		width:       width,
 		height:      height,
@@ -103,7 +103,7 @@ func ReadPPM(filename string) (*PPM, error) {
 		width:       width,
 		height:      height,
 		magicNumber: magicNumber,
-		max:         max,
+		max:         uint8(max),
 	}
 
 	ppm.data = make([][]Pixel, height)
@@ -181,7 +181,7 @@ func (ppm *PPM) Save(filename string) error {
 		return err
 	}
 
-	_, err = writer.WriteString(strconv.Itoa(ppm.max) + "\n")
+	_, err = writer.WriteString(strconv.Itoa(int(ppm.max)) + "\n")
 	if err != nil {
 		return err
 	}
@@ -251,7 +251,7 @@ func (ppm *PPM) SetMagicNumber(magicNumber string) {
 }
 
 func (ppm *PPM) SetMaxValue(maxValue uint8) {
-	ppm.max = int(maxValue)
+	ppm.max = maxValue
 }
 
 func (ppm *PPM) Rotate90CW() {
@@ -335,7 +335,10 @@ func (ppm *PPM) DrawLine(p1, p2 Point, color Pixel) {
 	err := dx - dy
 
 	for {
-		ppm.Set(p1.X, p1.Y, color)
+		// Check if the current point is within the image boundaries
+		if p1.X >= 0 && p1.X < ppm.width && p1.Y >= 0 && p1.Y < ppm.height {
+			ppm.Set(p1.X, p1.Y, color)
+		}
 
 		if p1.X == p2.X && p1.Y == p2.Y {
 			break
@@ -350,6 +353,11 @@ func (ppm *PPM) DrawLine(p1, p2 Point, color Pixel) {
 			err += dx
 			p1.Y += sy
 		}
+
+		// Additional check to break the loop if the point goes out of bounds
+		if p1.X < 0 || p1.X >= ppm.width || p1.Y < 0 || p1.Y >= ppm.height {
+			break
+		}
 	}
 }
 
@@ -358,20 +366,50 @@ func (ppm *PPM) DrawLine(p1, p2 Point, color Pixel) {
 /////////////////////
 
 func (ppm *PPM) DrawRectangle(p1 Point, width, height int, color Pixel) {
-	ppm.DrawLine(p1, Point{X: p1.X + width - 1, Y: p1.Y}, color)
-	ppm.DrawLine(Point{X: p1.X + width - 1, Y: p1.Y}, Point{X: p1.X + width - 1, Y: p1.Y + height - 1}, color)
-	ppm.DrawLine(Point{X: p1.X + width - 1, Y: p1.Y + height - 1}, Point{X: p1.X, Y: p1.Y + height - 1}, color)
-	ppm.DrawLine(Point{X: p1.X, Y: p1.Y + height - 1}, p1, color)
+	if p1.X < 0 {
+		p1.X = 0
+	}
+	if p1.Y < 0 {
+		p1.Y = 0
+	}
+
+	if p1.X+width > ppm.width {
+		width = ppm.width - p1.X
+	}
+	if p1.Y+height > ppm.height {
+		height = ppm.height - p1.Y
+	}
+
+	ppm.DrawLine(p1, Point{X: p1.X + width, Y: p1.Y}, color)
+	ppm.DrawLine(Point{X: p1.X + width, Y: p1.Y}, Point{X: p1.X + width, Y: p1.Y + height}, color)
+	ppm.DrawLine(Point{X: p1.X + width, Y: p1.Y + height}, Point{X: p1.X, Y: p1.Y + height}, color)
+	ppm.DrawLine(Point{X: p1.X, Y: p1.Y + height}, p1, color)
 }
 
 func (ppm *PPM) DrawFilledRectangle(p1 Point, width, height int, color Pixel) {
-	ppm.DrawLine(p1, Point{X: p1.X + width - 1, Y: p1.Y}, color)
-	ppm.DrawLine(Point{X: p1.X + width - 1, Y: p1.Y}, Point{X: p1.X + width - 1, Y: p1.Y + height - 1}, color)
-	ppm.DrawLine(Point{X: p1.X + width - 1, Y: p1.Y + height - 1}, Point{X: p1.X, Y: p1.Y + height - 1}, color)
-	ppm.DrawLine(Point{X: p1.X, Y: p1.Y + height - 1}, p1, color)
+	if p1.X < 0 {
+		p1.X = 0
+	}
+	if p1.Y < 0 {
+		p1.Y = 0
+	}
 
-	for y := p1.Y + 1; y < p1.Y+height-1; y++ {
-		ppm.DrawLine(Point{X: p1.X + 1, Y: y}, Point{X: p1.X + width - 2, Y: y}, color)
+	if p1.X+width > ppm.width {
+		width = ppm.width - p1.X
+	}
+	if p1.Y+height > ppm.height {
+		height = ppm.height - p1.Y
+	}
+
+	ppm.DrawLine(p1, Point{X: p1.X + width, Y: p1.Y}, color)
+	ppm.DrawLine(Point{X: p1.X + width, Y: p1.Y}, Point{X: p1.X + width, Y: p1.Y + height}, color)
+	ppm.DrawLine(Point{X: p1.X + width, Y: p1.Y + height}, Point{X: p1.X, Y: p1.Y + height}, color)
+	ppm.DrawLine(Point{X: p1.X, Y: p1.Y + height}, p1, color)
+
+	for y := p1.Y + 1; y < p1.Y+height; y++ {
+		for x := p1.X + 1; x < p1.X+width; x++ {
+			ppm.Set(x, y, color)
+		}
 	}
 }
 
@@ -380,56 +418,22 @@ func (ppm *PPM) DrawFilledRectangle(p1 Point, width, height int, color Pixel) {
 /////////////////////
 
 func (ppm *PPM) DrawCircle(center Point, radius int, color Pixel) {
-	x := radius
-	y := 0
-	err := 0
 
-	for x >= y {
-		ppm.Set(center.X+x, center.Y-y, color)
-		ppm.Set(center.X+y, center.Y-x, color)
-		ppm.Set(center.X-y, center.Y-x, color)
-		ppm.Set(center.X-x, center.Y-y, color)
-		ppm.Set(center.X-x, center.Y+y, color)
-		ppm.Set(center.X-y, center.Y+x, color)
-		ppm.Set(center.X+y, center.Y+x, color)
-		ppm.Set(center.X+x, center.Y+y, color)
+	// Avec cos et sin seulement le contour du cercle est dessiné
+	for i := 0; i < 360; i++ {
+		x := int(float64(radius)*math.Cos(float64(i)*math.Pi/180-1)) + center.X
+		y := int(float64(radius)*math.Sin(float64(i)*math.Pi/180-1)) + center.Y
 
-		y++
-		if err <= 0 {
-			err += 2*y + 1
-		}
-
-		if err > 0 {
-			x--
-			err -= 2*x + 1
-		}
+		ppm.Set(x, y, color)
 	}
 }
 
 func (ppm *PPM) DrawFilledCircle(center Point, radius int, color Pixel) {
-	x := radius
-	y := 0
-	err := 0
-
-	for x >= y {
-		for i := center.X - x; i <= center.X+x; i++ {
-			ppm.Set(i, center.Y+y, color)
-			ppm.Set(i, center.Y-y, color)
-		}
-
-		for i := center.X - y; i <= center.X+y; i++ {
-			ppm.Set(i, center.Y+x, color)
-			ppm.Set(i, center.Y-x, color)
-		}
-
-		y++
-		if err <= 0 {
-			err += 2*y + 1
-		}
-
-		if err > 0 {
-			x--
-			err -= 2*x + 1
+	for y := center.Y - radius; y < center.Y+radius; y++ {
+		for x := center.X - radius; x < center.X+radius; x++ {
+			if (x-center.X)*(x-center.X)+(y-center.Y)*(y-center.Y) < radius*radius {
+				ppm.Set(x, y, color)
+			}
 		}
 	}
 }
@@ -471,31 +475,43 @@ func (ppm *PPM) DrawPolygon(points []Point, color Pixel) {
 }
 
 func (ppm *PPM) DrawFilledPolygon(points []Point, color Pixel) {
-	sort.Slice(points, func(i, j int) bool {
-		return points[i].Y < points[j].Y
-	})
+	// Draw the polygon outline
+	ppm.DrawPolygon(points, color)
 
-	leftX := float64(points[0].X)
-	rightX := float64(points[0].X)
+	// Find the bounding box of the polygon
+	minY := points[0].Y
+	maxY := points[0].Y
+	for _, point := range points {
+		if point.Y < minY {
+			minY = point.Y
+		}
+		if point.Y > maxY {
+			maxY = point.Y
+		}
+	}
 
-	for y := points[0].Y; y <= points[len(points)-1].Y; y++ {
-		for i := 0; i < len(points)-1; i++ {
-			if y >= points[i].Y && y < points[i+1].Y || y >= points[i+1].Y && y < points[i].Y {
-				x := interpolate(points[i], points[i+1], y)
+	for y := minY + 1; y < maxY; y++ {
+		intersectionPoints := []int{}
 
-				if x < leftX {
-					leftX = x
-				}
-				if x > rightX {
-					rightX = x
-				}
+		for i := 0; i < len(points); i++ {
+			p1 := points[i]
+			p2 := points[(i+1)%len(points)]
+
+			if (p1.Y <= y && p2.Y > y) || (p2.Y <= y && p1.Y > y) {
+				x := int(interpolate(p1, p2, y))
+				intersectionPoints = append(intersectionPoints, x)
 			}
 		}
 
-		ppm.DrawLine(Point{X: int(leftX), Y: y}, Point{X: int(rightX), Y: y}, color)
+		sort.Ints(intersectionPoints)
 
-		leftX = float64(points[0].X)
-		rightX = float64(points[0].X)
+		for i := 0; i < len(intersectionPoints)-1; i += 2 {
+			start, end := intersectionPoints[i], intersectionPoints[i+1]
+
+			for x := start + 1; x < end; x++ {
+				ppm.Set(x, y, color)
+			}
+		}
 	}
 }
 

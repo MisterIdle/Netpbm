@@ -18,7 +18,7 @@ type PGM struct {
 	data          [][]uint8
 	width, height int
 	magicNumber   string
-	max           int
+	max           uint8
 }
 
 func ReadPGM(filename string) (*PGM, error) {
@@ -46,7 +46,13 @@ func ReadPGM(filename string) (*PGM, error) {
 	height, _ := strconv.Atoi(scope[1])
 
 	scanner.Scan()
-	max, _ := strconv.Atoi(scanner.Text())
+
+	maxValue, err := strconv.Atoi(scanner.Text())
+	if err != nil {
+		fmt.Println("Error reading max value")
+	}
+
+	max := uint8(maxValue)
 
 	data := make([][]uint8, height)
 	for i := range data {
@@ -145,7 +151,7 @@ func (pgm *PGM) SetMagicNumber(magicNumber string) {
 
 func (pgm *PGM) SetMaxValue(maxValue uint8) {
 	if maxValue >= 1 && maxValue <= 255 {
-		pgm.max = int(maxValue)
+		pgm.max = maxValue
 
 		for i := 0; i < pgm.height; i++ {
 			for j := 0; j < pgm.width; j++ {
