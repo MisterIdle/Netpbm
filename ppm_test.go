@@ -1,6 +1,7 @@
 package Netpbm
 
 import (
+	"os"
 	"testing"
 )
 
@@ -284,29 +285,29 @@ func TestReadPPM(t *testing.T) {
 			t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
 		}
 	}
-	//ppm, err = ReadPPM("./testImages/ppm/testP6.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//if ppm.magicNumber != "P6" {
-	//	t.Error("Magic number not read correctly")
-	//}
-	//if ppm.width != imagePPMWidth {
-	//	t.Error("Width not read correctly")
-	//}
-	//if ppm.height != imagePPMHeight {
-	//	t.Error("Height not read correctly")
-	//}
-	//if ppm.max != imagePPMMax {
-	//	t.Error("Max value not read correctly")
-	//}
-	//for i := 0; i < imageWidth*imageHeight; i++ {
-	//	x := i % imageWidth
-	//	y := i / imageWidth
-	//	if ppm.data[y][x] != imagePPMData[i] {
-	//		t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
-	//	}
-	//}
+	ppm, err = ReadPPM("./testImages/ppm/testP6.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	if ppm.magicNumber != "P6" {
+		t.Error("Magic number not read correctly")
+	}
+	if ppm.width != imagePPMWidth {
+		t.Error("Width not read correctly")
+	}
+	if ppm.height != imagePPMHeight {
+		t.Error("Height not read correctly")
+	}
+	if ppm.max != imagePPMMax {
+		t.Error("Max value not read correctly")
+	}
+	for i := 0; i < imageWidth*imageHeight; i++ {
+		x := i % imageWidth
+		y := i / imageWidth
+		if ppm.data[y][x] != imagePPMData[i] {
+			t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
+		}
+	}
 }
 
 func TestPPMSize(t *testing.T) {
@@ -379,47 +380,47 @@ func TestPPMSave(t *testing.T) {
 			t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
 		}
 	}
-	//ppm, err = ReadPPM("./testImages/ppm/testP6.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//ppm.SetMagicNumber("P6")
-	//err = ppm.Save("./testImages/ppm/testP6a.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//ppm, err = ReadPPM("./testImages/ppm/testP6a.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//if ppm.magicNumber != "P6" {
-	//	t.Error("Magic number not read correctly")
-	//}
-	//if ppm.width != imagePPMWidth {
-	//	t.Error("Width not read correctly")
-	//}
-	//if ppm.height != imagePPMHeight {
-	//	t.Error("Height not read correctly")
-	//}
-	//if ppm.max != imagePPMMax {
-	//	t.Error("Max value not read correctly")
-	//}
-	//for i := 0; i < imageWidth*imageHeight; i++ {
-	//	x := i % imageWidth
-	//	y := i / imageWidth
-	//	if ppm.data[y][x] != imagePPMData[i] {
-	//		t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
-	//	}
-	//}
-	//// remove the test files
-	//err = os.Remove("./testImages/ppm/testP3a.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
-	//err = os.Remove("./testImages/ppm/testP6a.ppm")
-	//if err != nil {
-	//	t.Error(err)
-	//}
+	ppm, err = ReadPPM("./testImages/ppm/testP6.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	ppm.SetMagicNumber("P6")
+	err = ppm.Save("./testImages/ppm/testP6a.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	ppm, err = ReadPPM("./testImages/ppm/testP6a.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	if ppm.magicNumber != "P6" {
+		t.Error("Magic number not read correctly")
+	}
+	if ppm.width != imagePPMWidth {
+		t.Error("Width not read correctly")
+	}
+	if ppm.height != imagePPMHeight {
+		t.Error("Height not read correctly")
+	}
+	if ppm.max != imagePPMMax {
+		t.Error("Max value not read correctly")
+	}
+	for i := 0; i < imageWidth*imageHeight; i++ {
+		x := i % imageWidth
+		y := i / imageWidth
+		if ppm.data[y][x] != imagePPMData[i] {
+			t.Errorf("Pixel at (%d, %d) not read correctly", x, y)
+		}
+	}
+	// remove the test files
+	err = os.Remove("./testImages/ppm/testP3a.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	err = os.Remove("./testImages/ppm/testP6a.ppm")
+	if err != nil {
+		t.Error(err)
+	}
 }
 
 func TestPPMInvert(t *testing.T) {
@@ -483,30 +484,30 @@ func TestPPMSetMagicNumber(t *testing.T) {
 	}
 }
 
-//func TestPPMSetMaxValue(t *testing.T) {
-//	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
-//	if err != nil {
-//		t.Error(err)
-//	}
-//	oldMax := ppm.max
-//	ppm.SetMaxValue(128)
-//	if ppm.max != 128 {
-//		t.Error("Max value not set correctly")
-//	}
-//	for i := 0; i < imageWidth*imageHeight; i++ {
-//		x := i % imageWidth
-//		y := i / imageWidth
-//		if ppm.data[y][x].R != uint8(float64(imagePPMData[i].R)*float64(ppm.max)/float64(oldMax)) {
-//			t.Errorf("Red value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].R)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].R)
-//		}
-//		if ppm.data[y][x].G != uint8(float64(imagePPMData[i].G)*float64(ppm.max)/float64(oldMax)) {
-//			t.Errorf("Green value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].G)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].G)
-//		}
-//		if ppm.data[y][x].B != uint8(float64(imagePPMData[i].B)*float64(ppm.max)/float64(oldMax)) {
-//			t.Errorf("Blue value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].B)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].B)
-//		}
-//	}
-//}
+func TestPPMSetMaxValue(t *testing.T) {
+	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	oldMax := ppm.max
+	ppm.SetMaxValue(128)
+	if ppm.max != 128 {
+		t.Error("Max value not set correctly")
+	}
+	for i := 0; i < imageWidth*imageHeight; i++ {
+		x := i % imageWidth
+		y := i / imageWidth
+		if ppm.data[y][x].R != uint8(float64(imagePPMData[i].R)*float64(ppm.max)/float64(oldMax)) {
+			t.Errorf("Red value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].R)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].R)
+		}
+		if ppm.data[y][x].G != uint8(float64(imagePPMData[i].G)*float64(ppm.max)/float64(oldMax)) {
+			t.Errorf("Green value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].G)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].G)
+		}
+		if ppm.data[y][x].B != uint8(float64(imagePPMData[i].B)*float64(ppm.max)/float64(oldMax)) {
+			t.Errorf("Blue value at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8(float64(imagePPMData[i].B)*float64(ppm.max)/float64(oldMax)), ppm.data[y][x].B)
+		}
+	}
+}
 
 func TestPPMRotate90CW(t *testing.T) {
 	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
@@ -529,32 +530,32 @@ func TestPPMRotate90CW(t *testing.T) {
 	}
 }
 
-//func TestPPMToPGM(t *testing.T) {
-//	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
-//	if err != nil {
-//		t.Error(err)
-//	}
-//	pgm := ppm.ToPGM()
-//	if pgm.magicNumber != "P2" {
-//		t.Error("Magic number not set correctly")
-//	}
-//	if pgm.width != imagePPMWidth {
-//		t.Error("Width not set correctly")
-//	}
-//	if pgm.height != imagePPMHeight {
-//		t.Error("Height not set correctly")
-//	}
-//	if pgm.max != imagePPMMax {
-//		t.Error("Max value not set correctly")
-//	}
-//	for i := 0; i < imageWidth*imageHeight; i++ {
-//		x := i % imageWidth
-//		y := i / imageWidth
-//		if pgm.data[y][x] != uint8((int(imagePPMData[i].R)+int(imagePPMData[i].G)+int(imagePPMData[i].B))/3) {
-//			t.Errorf("Pixel at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8((int(imagePPMData[i].R)+int(imagePPMData[i].G)+int(imagePPMData[i].B))/3), pgm.data[y][x])
-//		}
-//	}
-//}
+func TestPPMToPGM(t *testing.T) {
+	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
+	if err != nil {
+		t.Error(err)
+	}
+	pgm := ppm.ToPGM()
+	if pgm.magicNumber != "P2" {
+		t.Error("Magic number not set correctly")
+	}
+	if pgm.width != imagePPMWidth {
+		t.Error("Width not set correctly")
+	}
+	if pgm.height != imagePPMHeight {
+		t.Error("Height not set correctly")
+	}
+	if pgm.max != imagePPMMax {
+		t.Error("Max value not set correctly")
+	}
+	for i := 0; i < imageWidth*imageHeight; i++ {
+		x := i % imageWidth
+		y := i / imageWidth
+		if pgm.data[y][x] != uint8((int(imagePPMData[i].R)+int(imagePPMData[i].G)+int(imagePPMData[i].B))/3) {
+			t.Errorf("Pixel at (%d, %d) not converted correctly wanted %d got %d", x, y, uint8((int(imagePPMData[i].R)+int(imagePPMData[i].G)+int(imagePPMData[i].B))/3), pgm.data[y][x])
+		}
+	}
+}
 
 func TestPPMToPBM(t *testing.T) {
 	ppm, err := ReadPPM("./testImages/ppm/testP3.ppm")
