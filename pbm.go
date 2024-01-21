@@ -13,28 +13,29 @@ import (
 )
 
 const (
-	MagicNumberP1 = "P1"
-	MagicNumberP4 = "P4"
+	MagicNumberP1 = "P1" // Magic number for ASCII PBM format
+	MagicNumberP4 = "P4" // Magic number for binary (compressed) PBM format
 )
 
 // PBM represents a Netpbm PBM (Portable BitMap) image.
 type PBM struct {
-	data          [][]bool
-	width, height int
-	magicNumber   string
+	data          [][]bool // Pixel data (true for black, false for white)
+	width, height int      // Dimensions of the image
+	magicNumber   string   // Magic number to identify the file format
 }
 
 // ReadPBM reads a PBM image from a file.
 func ReadPBM(filename string) (*PBM, error) {
-
 	var width, height int
 
+	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	// Create a buffered reader for efficient reading
 	read := bufio.NewReader(file)
 
 	// Read magic number
@@ -47,7 +48,7 @@ func ReadPBM(filename string) (*PBM, error) {
 		return nil, fmt.Errorf("invalid magic number: %s", magicNumber)
 	}
 
-	// Read dim
+	// Read dimensions
 	dim, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading dimensions: %v", err)
@@ -57,14 +58,15 @@ func ReadPBM(filename string) (*PBM, error) {
 		return nil, fmt.Errorf("invalid dimensions: %v", err)
 	}
 
+	// Initialize the pixel data matrix
 	data := make([][]bool, height)
-
 	for i := range data {
 		data[i] = make([]bool, width)
 	}
 
+	// Read pixel data based on the magic number
 	if magicNumber == MagicNumberP1 {
-		// Read binary pixel data
+		// Read binary pixel data for ASCII PBM format
 		for y := 0; y < height; y++ {
 			line, err := read.ReadString('\n')
 			if err != nil {
@@ -78,9 +80,8 @@ func ReadPBM(filename string) (*PBM, error) {
 				data[y][x] = field == "1"
 			}
 		}
-
 	} else if magicNumber == MagicNumberP4 {
-		// Read binary pixel data (compressed)
+		// Read binary pixel data (compressed) for binary PBM format
 		expectedBytesPerRow := (width + 7) / 8
 		for y := 0; y < height; y++ {
 			row := make([]byte, expectedBytesPerRow)
@@ -108,6 +109,7 @@ func ReadPBM(filename string) (*PBM, error) {
 		}
 	}
 
+	// Create and return a PBM instance with the read data
 	return &PBM{data, width, height, magicNumber}, nil
 }
 
@@ -132,19 +134,20 @@ func (pbm *PBM) Save(filename string) error {
 		return errors.New("cannot save a nil PBM")
 	}
 
+	// Open the file for writing
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Write magic number, width, and height
+	// Write magic number, width, and height to the file
 	fmt.Fprintf(file, "%s\n%d %d\n", pbm.magicNumber, pbm.width, pbm.height)
 
 	// Choose the appropriate method based on the magic number
 	switch pbm.magicNumber {
 	case MagicNumberP1:
-		// Write binary pixel data
+		// Write binary pixel data for ASCII PBM format
 		for i := 0; i < pbm.height; i++ {
 			for j := 0; j < pbm.width; j++ {
 				if pbm.data[i][j] {
@@ -160,7 +163,7 @@ func (pbm *PBM) Save(filename string) error {
 			fmt.Fprintln(file)
 		}
 	case MagicNumberP4:
-		// Write binary pixel data (compressed)
+		// Write binary pixel data (compressed) for binary PBM format
 		expectedBytesPerRow := (pbm.width + 7) / 8
 		for y := 0; y < pbm.height; y++ {
 			row := make([]byte, expectedBytesPerRow)

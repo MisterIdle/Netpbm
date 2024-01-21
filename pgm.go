@@ -12,31 +12,33 @@ import (
 )
 
 const (
-	MagicNumberP2 = "P2"
-	MagicNumberP5 = "P5"
+	MagicNumberP2 = "P2" // Magic number for ASCII PGM format
+	MagicNumberP5 = "P5" // Magic number for binary PGM format
 )
 
 // PGM represents a grayscale image in PGM format.
 type PGM struct {
-	data          [][]uint8
-	width, height int
-	magicNumber   string
-	max           uint8
+	data          [][]uint8 // Pixel data (grayscale values)
+	width, height int       // Dimensions of the image
+	magicNumber   string    // Magic number to identify the file format
+	max           uint8     // Maximum pixel value in the image
 }
 
 // ReadPGM reads a PGM file and returns a PGM struct.
 func ReadPGM(filename string) (*PGM, error) {
-
 	var width, height int
 
+	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	// Create a buffered reader for efficient reading
 	read := bufio.NewReader(file)
 
+	// Read magic number
 	magicNumber, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading magic number: %v", err)
@@ -46,6 +48,7 @@ func ReadPGM(filename string) (*PGM, error) {
 		return nil, fmt.Errorf("invalid magic number: %s", magicNumber)
 	}
 
+	// Read dimensions
 	dim, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading dimensions: %v", err)
@@ -58,6 +61,7 @@ func ReadPGM(filename string) (*PGM, error) {
 		return nil, fmt.Errorf("invalid dimensions: width and height must be positive")
 	}
 
+	// Read max value
 	maxValue, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading max value: %v", err)
@@ -69,10 +73,12 @@ func ReadPGM(filename string) (*PGM, error) {
 		return nil, fmt.Errorf("invalid max value: %v", err)
 	}
 
+	// Initialize pixel data matrix
 	data := make([][]uint8, height)
 	expectedBytesPerPixel := 1
 
 	if magicNumber == MagicNumberP2 {
+		// Read ASCII pixel data for P2 format
 		for y := 0; y < height; y++ {
 			line, err := read.ReadString('\n')
 			if err != nil {
@@ -94,6 +100,7 @@ func ReadPGM(filename string) (*PGM, error) {
 			data[y] = rowData
 		}
 	} else if magicNumber == MagicNumberP5 {
+		// Read binary pixel data (compressed) for P5 format
 		for y := 0; y < height; y++ {
 			row := make([]byte, width*expectedBytesPerPixel)
 			n, err := read.Read(row)
@@ -116,6 +123,7 @@ func ReadPGM(filename string) (*PGM, error) {
 		}
 	}
 
+	// Create and return a PGM instance with the read data
 	return &PGM{data, width, height, magicNumber, uint8(max)}, nil
 }
 
@@ -159,6 +167,7 @@ func (pgm *PGM) Save(filename string) error {
 	}
 
 	if pgm.magicNumber == MagicNumberP2 {
+		// Write ASCII pixel data for P2 format
 		for y := 0; y < pgm.height; y++ {
 			for x := 0; x < pgm.width; x++ {
 				_, err := fmt.Fprint(writer, pgm.data[y][x])
@@ -179,6 +188,7 @@ func (pgm *PGM) Save(filename string) error {
 			}
 		}
 	} else if pgm.magicNumber == MagicNumberP5 {
+		// Write binary pixel data (compressed) for P5 format
 		for y := 0; y < pgm.height; y++ {
 			row := make([]byte, pgm.width)
 			for x := 0; x < pgm.width; x++ {
@@ -223,7 +233,7 @@ func (pgm *PGM) Flip() {
 	}
 }
 
-// Sets the magic number of the PGM image.
+// SetMagicNumber sets the magic number of the PGM image.
 func (pgm *PGM) SetMagicNumber(magicNumber string) {
 	pgm.magicNumber = magicNumber
 }
@@ -244,7 +254,6 @@ func (pgm *PGM) SetMaxValue(maxValue uint8) {
 
 // Rotate90CW rotates the PGM image 90 degrees clockwise.
 func (pgm *PGM) Rotate90CW() {
-
 	rotateData := make([][]uint8, pgm.width)
 	for i := range rotateData {
 		rotateData[i] = make([]uint8, pgm.height)
@@ -261,6 +270,7 @@ func (pgm *PGM) Rotate90CW() {
 	pgm.data = rotateData
 }
 
+// ToPBM converts the PGM image to a binary PBM image.
 func (pgm *PGM) ToPBM() *PBM {
 	pbm := &PBM{
 		width:       pgm.width,

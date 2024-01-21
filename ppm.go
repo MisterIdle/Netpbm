@@ -11,6 +11,7 @@ import (
 	"strings"
 )
 
+// Constants representing PPM magic numbers
 const (
 	MagicNumberP3 = "P3"
 	MagicNumberP6 = "P6"
@@ -18,12 +19,13 @@ const (
 
 // Pixel represents a color pixel in a PPM image.
 type PPM struct {
-	data          [][]Pixel
-	width, height int
-	magicNumber   string
-	max           uint8
+	data          [][]Pixel // 2D slice to store pixel data
+	width, height int       // Width and height of the image
+	magicNumber   string    // Magic number identifying the PPM format
+	max           uint8     // Maximum color value for the image
 }
 
+// Variables to store global width, height, and max values
 var (
 	max           uint8
 	width, height int
@@ -31,15 +33,17 @@ var (
 
 // ReadPPM reads a PPM image from a file.
 func ReadPPM(filename string) (*PPM, error) {
-
+	// Open the file
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
+	// Create a buffered reader for efficient reading
 	read := bufio.NewReader(file)
 
+	// Read and parse the magic number
 	magicNumber, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading magic number: %v", err)
@@ -49,11 +53,11 @@ func ReadPPM(filename string) (*PPM, error) {
 		return nil, fmt.Errorf("invalid magic number: %s", magicNumber)
 	}
 
+	// Read and parse dimensions (width and height)
 	dim, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading dimensions: %v", err)
 	}
-
 	_, err = fmt.Sscanf(strings.TrimSpace(dim), "%d %d", &width, &height)
 	if err != nil {
 		return nil, fmt.Errorf("invalid dimensions: %v", err)
@@ -62,6 +66,7 @@ func ReadPPM(filename string) (*PPM, error) {
 		return nil, fmt.Errorf("invalid dimensions: width and height must be positive")
 	}
 
+	// Read and parse the maximum color value
 	maxValue, err := read.ReadString('\n')
 	if err != nil {
 		return nil, fmt.Errorf("error reading max value: %v", err)
@@ -72,10 +77,13 @@ func ReadPPM(filename string) (*PPM, error) {
 		return nil, fmt.Errorf("invalid max value: %v", err)
 	}
 
+	// Initialize a 2D slice to store pixel data
 	data := make([][]Pixel, height)
 	expectedBytesPerPixel := 3
 
+	// Read pixel data based on the magic number
 	if magicNumber == MagicNumberP3 {
+		// Read ASCII data for P3 format
 		for y := 0; y < height; y++ {
 			line, err := read.ReadString('\n')
 			if err != nil {
@@ -105,6 +113,7 @@ func ReadPPM(filename string) (*PPM, error) {
 			data[y] = rowData
 		}
 	} else if magicNumber == MagicNumberP6 {
+		// Read binary data for P6 format
 		for y := 0; y < height; y++ {
 			row := make([]byte, width*expectedBytesPerPixel)
 			n, err := read.Read(row)
@@ -127,6 +136,7 @@ func ReadPPM(filename string) (*PPM, error) {
 		}
 	}
 
+	// Create and return the PPM object
 	return &PPM{data, width, height, magicNumber, uint8(max)}, nil
 }
 
@@ -147,11 +157,14 @@ func (ppm *PPM) Set(x, y int, value Pixel) {
 
 // Save saves a PPM image to a file.
 func (ppm *PPM) Save(filename string) error {
+	// Create or overwrite the file
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
+
+	// Write header information to the file
 	if ppm.magicNumber == MagicNumberP3 || ppm.magicNumber == MagicNumberP6 {
 		fmt.Fprintf(file, "%s\n%d %d\n%d\n", ppm.magicNumber, ppm.width, ppm.height, ppm.max)
 	} else {
@@ -159,6 +172,7 @@ func (ppm *PPM) Save(filename string) error {
 		return err
 	}
 
+	// Write pixel data to the file
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
 			pixel := ppm.data[y][x]
@@ -168,6 +182,7 @@ func (ppm *PPM) Save(filename string) error {
 				fmt.Fprintf(file, "%d %d %d ", pixel.R, pixel.G, pixel.B)
 			}
 		}
+		// Add newline for P3 format
 		if ppm.magicNumber == MagicNumberP3 {
 			fmt.Fprint(file, "\n")
 		}
@@ -180,6 +195,7 @@ func (ppm *PPM) Save(filename string) error {
 func (ppm *PPM) Invert() {
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
+			// Invert each color channel
 			ppm.data[y][x].R = uint8(ppm.max) - ppm.data[y][x].R
 			ppm.data[y][x].G = uint8(ppm.max) - ppm.data[y][x].G
 			ppm.data[y][x].B = uint8(ppm.max) - ppm.data[y][x].B
@@ -191,6 +207,7 @@ func (ppm *PPM) Invert() {
 func (ppm *PPM) Flip() {
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width/2; x++ {
+			// Swap pixels horizontally
 			ppm.data[y][x], ppm.data[y][ppm.width-x-1] = ppm.data[y][ppm.width-x-1], ppm.data[y][x]
 		}
 	}
@@ -200,6 +217,7 @@ func (ppm *PPM) Flip() {
 func (ppm *PPM) Flop() {
 	for y := 0; y < ppm.height/2; y++ {
 		for x := 0; x < ppm.width; x++ {
+			// Swap pixels vertically
 			ppm.data[y][x], ppm.data[ppm.height-y-1][x] = ppm.data[ppm.height-y-1][x], ppm.data[y][x]
 		}
 	}
@@ -214,6 +232,7 @@ func (ppm *PPM) SetMagicNumber(magicNumber string) {
 func (ppm *PPM) SetMaxValue(maxValue uint8) {
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
+			// Scale each color channel to the new max value
 			ppm.data[y][x].R = uint8(float64(ppm.data[y][x].R) * float64(maxValue) / float64(ppm.max))
 			ppm.data[y][x].G = uint8(float64(ppm.data[y][x].G) * float64(maxValue) / float64(ppm.max))
 			ppm.data[y][x].B = uint8(float64(ppm.data[y][x].B) * float64(maxValue) / float64(ppm.max))
@@ -224,23 +243,27 @@ func (ppm *PPM) SetMaxValue(maxValue uint8) {
 
 // Rotate90CW rotates a PPM image 90 degrees clockwise.
 func (ppm *PPM) Rotate90CW() {
+	// Create a new rotated 2D slice
 	rotated := make([][]Pixel, ppm.width)
 	for i := range rotated {
 		rotated[i] = make([]Pixel, ppm.height)
 	}
 
+	// Populate the rotated slice with the transposed data
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
 			rotated[x][ppm.height-y-1] = ppm.data[y][x]
 		}
 	}
 
+	// Update width, height, and data of the original PPM object
 	ppm.width, ppm.height = ppm.height, ppm.width
 	ppm.data = rotated
 }
 
 // ToPGM converts a PPM image to a PGM image.
 func (ppm *PPM) ToPGM() *PGM {
+	// Create a new PGM object with the same width, height, and max value
 	pgm := &PGM{
 		width:       ppm.width,
 		height:      ppm.height,
@@ -248,11 +271,13 @@ func (ppm *PPM) ToPGM() *PGM {
 		max:         ppm.max,
 	}
 
+	// Initialize a 2D slice for PGM data
 	pgm.data = make([][]uint8, ppm.height)
 	for i := range pgm.data {
 		pgm.data[i] = make([]uint8, ppm.width)
 	}
 
+	// Convert each pixel to grayscale and store in the PGM data
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
 			gray := uint8((int(ppm.data[y][x].R) + int(ppm.data[y][x].G) + int(ppm.data[y][x].B)) / 3)
@@ -265,17 +290,20 @@ func (ppm *PPM) ToPGM() *PGM {
 
 // ToPBM converts a PPM image to a PBM image.
 func (ppm *PPM) ToPBM() *PBM {
+	// Create a new PBM object with the same width, height, and magic number
 	pbm := &PBM{
 		width:       ppm.width,
 		height:      ppm.height,
 		magicNumber: "P1",
 	}
 
+	// Initialize a 2D slice for PBM data
 	pbm.data = make([][]bool, ppm.height)
 	for i := range pbm.data {
 		pbm.data[i] = make([]bool, ppm.width)
 	}
 
+	// Convert each pixel to binary based on a threshold and store in the PBM data
 	threshold := uint8(ppm.max / 2)
 	for y := 0; y < ppm.height; y++ {
 		for x := 0; x < ppm.width; x++ {
