@@ -1,5 +1,3 @@
-module netpbm
+module github.com/MisterIdle/Netpbm
 
-go 1.21.4
-
-require github.com/MisterIdle/Netpbm v1.0.1 // indirect
+go 1.21.6
